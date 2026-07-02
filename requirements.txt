@@ -1,0 +1,5 @@
+Django==5.2.5
+django-allauth==65.11.1
+python-dotenv==1.1.1
+pillow==11.3.0
+requests==2.32.5

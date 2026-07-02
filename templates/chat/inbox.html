@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Mesajlar · CarBnB{% endblock %}
+{% block content %}
+<h1>Mesajlar</h1>
+
+{% if items %}
+  <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px;">
+    {% for it in items %}
+      <li style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div><strong>{{ it.conv.car.title }}</strong></div>
+            <div style="font-size:14px;color:#555;">
+              Karşı taraf: {{ it.other.username }}
+            </div>
+          </div>
+          <a href="{% url 'chat:thread' it.conv.pk %}" style="background:#2563eb;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;">
+            Konuşmayı Aç
+          </a>
+        </div>
+        {% if it.unread and it.unread > 0 %}
+          <div style="margin-top:8px;">
+            <span style="background:#ef4444;color:#fff;border-radius:999px;padding:2px 8px;">{{ it.unread }} yeni</span>
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>Henüz bir mesajınız yok.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Ödeme</h2>
+
+<div class="card" style="max-width:900px;margin:0 auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff;">
+  <div style="display:flex;gap:16px;padding:16px;align-items:center">
+    {% if booking.car.cover %}
+      <img src="{{ booking.car.cover.image.url }}" alt="" style="width:240px;height:140px;object-fit:cover;border-radius:10px;">
+    {% endif %}
+    <div style="flex:1">
+      <h3 style="margin:0 0 8px 0;">Kiralık {{ booking.car.title }}</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <span class="chip">{{ booking.car.brand }}</span>
+        <span class="chip">{{ booking.car.year }}</span>
+        {% if booking.car.km %}<span class="chip">{{ booking.car.km }} km</span>{% endif %}
+      </div>
+
+      <div style="border:2px dashed #d1fae5;background:#ecfdf5;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;">Günlük Fiyat</div>
+          <small>Bu bir demo sayfasıdır. Gerçek ödeme burada Stripe/İyzico vb. ile olur.</small>
+        </div>
+        <div style="font-weight:800;font-size:20px">{{ booking.total_price }} ₺</div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <small>
+          Tarih: {{ booking.start_date }} → {{ booking.end_date }} ({{ booking.days }} gün)
+          · <a href="{{ booking.car.get_absolute_url }}">« ilan detayına dön</a>
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- KVKK onayı -->
+  <div id="kvkkBox" style="margin:0 16px 14px 16px; padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#f9fafb;">
+    <!-- Başlık: buna basınca metin açılır/kapanır -->
+    <details style="margin-bottom:10px;">
+      <summary style="list-style:none; cursor:pointer; font-weight:800; color:#111; display:flex; align-items:center; gap:8px;">
+        KVKK Aydınlatma Metni
+      </summary>
+      <div style="margin-top:10px; padding:10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff;">
+        <p style="margin:0 0 8px 0;">
+          Kişisel verileriniz, 6698 sayılı KVKK ve ilgili mevzuat uyarınca rezervasyonun kurulması,
+          ödeme işlemlerinin yürütülmesi ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenmektedir.
+        </p>
+        <p style="margin:0;">
+          Toplanan veriler; sözleşme ilişkisi, yasal yükümlülükler ve meşru menfaat kapsamında işlenecek;
+          gerekli hallerde iş ortakları/yetkili kurumlarla mevzuata uygun şekilde paylaşılacaktır.
+          İlgili kişi hakları ve başvuru yöntemleri aydınlatma metninde belirtilmiştir.
+        </p>
+      </div>
+    </details>
+
+    <!-- Checkbox -->
+    <label for="kvkkCheckbox" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0;">
+      <input type="checkbox" id="kvkkCheckbox" style="margin-top:4px;">
+      <span style="line-height:1.4;color:#111;">
+        KVKK Aydınlatma Metni’ni okudum ve onaylıyorum.
+        <br><small style="color:#6b7280">Onay vermeden ödeme yapılamaz.</small>
+      </span>
+    </label>
+  </div>
+
+  <!-- Ödeme butonu -->
+  <div style="display:flex;align-items:center;gap:16px;padding:0 16px 18px 16px;">
+    <a id="payBtn"
+       href="{% url 'payment_done' booking.id %}"
+       class="btn disabled"
+       aria-disabled="true"
+       style="display:inline-block;background:#16a34a;color:#fff;border-radius:8px;padding:10px 16px;text-decoration:none;font-weight:700;">
+      Kartla Öde (Demo)
+    </a>
+    <a href="{{ booking.car.get_absolute_url }}">« ilan detayına dön</a>
+  </div>
+</div>
+
+<style>
+  .chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px}
+  .btn.disabled{background:#9ca3af !important;pointer-events:none}
+</style>
+
+<script>
+  (function(){
+    const checkbox = document.getElementById('kvkkCheckbox');
+    const payBtn   = document.getElementById('payBtn');
+
+    function togglePay(){
+      const ok = checkbox && checkbox.checked;
+      payBtn.classList.toggle('disabled', !ok);
+      payBtn.setAttribute('aria-disabled', String(!ok));
+    }
+    if (checkbox) checkbox.addEventListener('change', togglePay);
+
+    if (payBtn){
+      payBtn.addEventListener('click', function(e){
+        if (!checkbox || !checkbox.checked){
+          e.preventDefault();
+          alert('Lütfen KVKK metnini onaylayın.');
+        }
+      });
+    }
+
+    togglePay();
+  })();
+</script>
+{% endblock %}

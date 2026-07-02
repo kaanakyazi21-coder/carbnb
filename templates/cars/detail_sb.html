@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ car.title }} · CarBnB{% endblock %}
+
+{% block content %}
+<style>
+  :root{--line:#e8edf3;--ink:#0f172a;--muted:#64748b;--ok:#22c55e;--badge:#f5f7fb}
+  .page{max-width:1400px;margin:0 auto;padding:0 12px 40px}
+  .grid{display:grid;grid-template-columns:760px 360px 240px;gap:20px}
+  @media(max-width:1220px){.grid{grid-template-columns:1fr;gap:14px}}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px}
+  .pad{padding:12px}
+
+  .page-title{font-size:22px;font-weight:800;color:var(--ink);margin:14px 0 6px}
+  .locline a{color:#1d4ed8;text-decoration:none;font-weight:600}
+
+  .photos .hero{aspect-ratio:16/10;background:#000;cursor:pointer}
+  .photos .hero img{width:100%;height:100%;object-fit:cover}
+  .thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;border-top:1px solid var(--line);padding:8px}
+  .thumbs img{width:100%;height:70px;object-fit:cover;border:2px solid transparent;cursor:pointer}
+  .thumbs img.active{border-color:#2563eb}
+
+  .tbl{border-top:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:150px 1fr;border-bottom:1px solid var(--line);padding:7px 10px;font-size:13px}
+  .row b{color:#334155}
+
+  .seller{border:1px solid var(--line);border-radius:6px;background:#f9fbff}
+  .seller .s-head{padding:10px 12px;border-bottom:1px solid var(--line);font-weight:700}
+  .seller .s-body{padding:10px 12px}
+  .seller .s-line{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
+  .seller .phone a{text-decoration:none}
+
+  .msg-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:#0f172a;
+    border-radius:8px;padding:8px 10px;text-decoration:none;font-weight:600}
+  .msg-btn:hover{box-shadow:0 1px 0 rgba(0,0,0,.06)}
+
+  .tabs{margin-top:16px;border-bottom:1px solid var(--line);display:flex;gap:8px}
+  .tab{padding:10px 12px;font-size:14px;cursor:pointer;border:1px solid var(--line);border-bottom:none;
+    border-top-left-radius:6px;border-top-right-radius:6px;background:#f7f9fc}
+  .tab.active{background:#fff}
+  .tabpanes{border:1px solid var(--line);border-top:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}
+  .pane{display:none}
+  .pane.active{display:block}
+
+  .desc{padding:16px}
+  .desc ul{list-style:none;padding:0;margin:0;text-align:center}
+  .desc li{font-weight:600;letter-spacing:.2px;margin:8px 0}
+
+  .damage{padding:12px;display:grid;grid-template-columns:260px 1fr;gap:16px}
+  @media(max-width:800px){.damage{grid-template-columns:1fr}}
+  .legend h4{margin:0 0 8px 0}
+  .legend .k{font-weight:700;margin:6px 0}
+  .legend ul{margin:0 0 8px 16px}
+  .badge{display:inline-block;background:var(--badge);border:1px solid var(--line);padding:3px 8px;border-radius:6px;margin:4px 6px 0 0}
+
+  .car-sil{background:#f8fbff;border:1px solid var(--line);border-radius:6px;padding:10px}
+  .car-grid{display:grid;grid-template-columns:60px 140px 60px;grid-template-rows:60px 60px 60px;gap:6px;justify-content:center}
+  .part{border:1px dashed #cfd7e3;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;padding:4px}
+  .part[data-code="l"]{background:#fde6cc}
+  .part[data-code="b"]{background:#dfe9ff}
+  .part[data-code="d"]{background:#ffdcdc}
+
+  .fe-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:0 12px 12px}
+  .fe-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .ok{color:#059669}.no{color:#ef4444}
+
+  .pricebar{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);
+    border-radius:8px;background:#fff;padding:14px 16px;margin-top:16px}
+  .pricebar .loc a{color:#1d4ed8;text-decoration:none;font-weight:600}
+  .pricebar .price{font-size:22px;font-weight:800}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:8px;
+    border:1px solid #0ea5e9;background:#16a34a;color:#fff;font-weight:700;text-decoration:none}
+  .btn:active{transform:translateY(1px)}
+</style>
+
+<div class="page">
+  <!-- Başlık + lokasyon -->
+  <h1 class="page-title">{{ car.title }}</h1>
+  <div class="locline">
+    {% if map_url %}<a href="{{ map_url }}" target="_blank">{% endif %}
+      {{ car.city|default_if_none:"" }}{% if car.city and car.district %} / {% endif %}{{ car.district|default_if_none:"" }}
+    {% if map_url %}</a>{% endif %}
+  </div>
+
+  <div class="grid">
+    <!-- 1) SOL: GALERİ + SEKME + FİYAT BAR -->
+    <section>
+      <div class="card photos">
+        <div class="hero" id="hero" title="Sonraki foto">
+          {% if cover %}<img src="{{ cover.image.url }}" alt="cover">{% endif %}
+        </div>
+        {% if photos %}
+        <div class="thumbs" id="thumbs">
+          {% for p in photos %}
+            <img src="{{ p.image.url }}" data-src="{{ p.image.url }}" class="{% if forloop.first %}active{% endif %}">
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="aciklama">İlan Detayları</div>
+        <div class="tab" data-tab="konum">Konumu</div>
+        <div class="tab" data-tab="teknik">Teknik Özellikler</div>
+      </div>
+
+      <div class="tabpanes card">
+        <!-- İLAN DETAYLARI -->
+        <div class="pane active" id="pane-aciklama">
+          <div class="desc">
+            {% if description_lines %}
+              <ul>{% for line in description_lines %}<li>{{ line }}</li>{% endfor %}</ul>
+            {% else %}
+              <p style="text-align:center;color:#64748b">Açıklama eklenmemiş.</p>
+            {% endif %}
+          </div>
+
+          <div class="damage">
+            <div class="car-sil">
+              <div class="car-grid" id="carGrid">
+                <div class="part" data-key="fender_fl">Sol Ön Çamurluk</div>
+                <div class="part" data-key="hood">Kaput</div>
+                <div class="part" data-key="fender_fr">Sağ Ön Çamurluk</div>
+                <div class="part" data-key="door_fl">Sol Ön Kapı</div>
+                <div class="part" data-key="roof">Tavan</div>
+                <div class="part" data-key="door_fr">Sağ Ön Kapı</div>
+                <div class="part" data-key="fender_rl">Sol Arka Çamurluk</div>
+                <div class="part" data-key="trunk">Bagaj</div>
+                <div class="part" data-key="fender_rr">Sağ Arka Çamurluk</div>
+              </div>
+            </div>
+            <div class="legend">
+              <h4>Boyalı veya Değişen Parça</h4>
+              {% if grouped.l or grouped.b or grouped.d %}
+                {% if grouped.l %}<div class="k">Lokal Boyalı Parçalar</div><ul>{% for it in grouped.l %}<li>{{ it }}</li>{% endfor %}</ul>{% endif %}
+                {% if grouped.b %}<div class="k">Boyalı Parçalar</div><ul>{% for it in grouped.b %}<li>{{ it }}</li>{% endfor %}</ul>{% endif %}
+                {% if grouped.d %}<div class="k">Değişen Parçalar</div><ul>{% for it in grouped.d %}<li>{{ it }}</li>{% endfor %}</ul>{% endif %}
+              {% else %}
+                <span class="badge">Tüm parçalar orijinal</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Donanımlar -->
+          <div class="fe-grid">
+            {% for cat, items in feature_groups.items %}
+              <div class="fe-cat">
+                <h4>{{ cat }}</h4>
+                <div class="fe-list">
+                  {% for name, has in items %}
+                    {% if has %}<div class="ok">✓ {{ name }}</div>
+                    {% else %}<div class="no">✗ {{ name }}</div>{% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- KONUM -->
+        <div class="pane" id="pane-konum">
+          <div class="pad">
+            {% if map_url %}<p><a href="{{ map_url }}" target="_blank">Haritada aç</a></p>{% endif %}
+            {% if map_embed_url %}
+              <iframe src="{{ map_embed_url }}" width="100%" height="360" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            {% else %}
+              <p>Konum bilgisi yok.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- TEKNİK ÖZELLİKLER -->
+        <div class="pane" id="pane-teknik">
+          {% include "cars/partials/spec_table_like_sb.html" %}
+        </div>
+      </div>
+
+      <!-- FİYAT + KİRALA (EN ALTA) -->
+      <div class="pricebar">
+        <div class="loc">
+          {% if map_url %}
+            <a href="{{ map_url }}" target="_blank">
+              {{ car.district|default_if_none:""|default:"" }}{% if car.city %}{% if car.district %} / {% endif %}{{ car.city }}{% endif %}
+            </a>
+          {% else %}
+            <span>{{ car.district }}{% if car.city %}{% if car.district %} / {% endif %}{{ car.city }}{% endif %}</span>
+          {% endif %}
+        </div>
+        <div class="price">{{ price_text }}</div>
+
+        <!-- Kirala: direkt ödeme sayfasına -->
+        <a class="btn" href="{% url 'cars:checkout' car.pk %}">Kirala</a>
+      </div>
+    </section>
+
+    <!-- 2) ORTA: BİLGİ TABLOSU -->
+    <aside class="info-col">
+      <div class="card pad info">
+        <div class="tbl">
+          {% for label, val in info_rows %}
+            <div class="row"><b>{{ label }}</b><div>{{ val }}</div></div>
+          {% endfor %}
+        </div>
+        <div class="pad" style="border-top:1px solid var(--line)">
+          {% if map_url %}<a href="{{ map_url }}" target="_blank">Konumu haritada aç</a>{% endif %}
+        </div>
+      </div>
+    </aside>
+
+    <!-- 3) SAĞ: İLAN SAHİBİ -->
+    <aside class="seller-col">
+      <div class="seller">
+        <div class="s-head">İlan Sahibi</div>
+        <div class="s-body">
+          <div style="font-weight:700;margin-bottom:4px">{{ seller_fullname }}</div>
+          <div style="color:#64748b;margin-bottom:8px">Hesap açma tarihi: {{ seller_since }}</div>
+          <div class="s-line phone">
+            <span>Cep</span>
+            {% if seller_phone and seller_phone != "—" %}
+              <a href="tel:{{ seller_phone|cut:' ' }}">{{ seller_phone }}</a>
+            {% else %}<span>—</span>{% endif %}
+          </div>
+          {% if car.owner and car.owner.id and request.user.id != car.owner.id %}
+          <div style="margin-top:10px">
+            <a class="msg-btn" href="{% url 'chat:inbox' %}?to={{ car.owner.id }}">💬 Mesaj gönder</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  // thumbs -> hero
+  const thumbs = document.getElementById('thumbs');
+  const hero = document.getElementById('hero');
+  const imgs = thumbs ? Array.from(thumbs.querySelectorAll('img')) : [];
+  let idx = 0;
+  function show(i){
+    if (!imgs.length) return;
+    idx = (i+imgs.length)%imgs.length;
+    imgs.forEach(x=>x.classList.remove('active'));
+    imgs[idx].classList.add('active');
+    hero.innerHTML = `<img src="${imgs[idx].dataset.src}" alt="">`;
+  }
+  if (imgs.length){
+    imgs.forEach((im,i)=>im.addEventListener('click',()=>show(i)));
+    hero.addEventListener('click',()=>show(idx+1));
+  }
+
+  // tabs
+  const tabs = document.querySelectorAll('.tab');
+  const panes = document.querySelectorAll('.pane');
+  tabs.forEach(t=>{
+    t.addEventListener('click', ()=>{
+      tabs.forEach(x=>x.classList.remove('active'));
+      panes.forEach(p=>p.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('pane-'+t.dataset.tab).classList.add('active');
+    });
+  });
+
+  // damage coloring
+  const damage = {{ car.damage_json|default:"{}"|safe }};
+  document.querySelectorAll('.part').forEach(el=>{
+    const k = el.getAttribute('data-key');
+    const code = (damage && damage[k]) || 'o';
+    if (code !== 'o') el.setAttribute('data-code', code);
+  });
+</script>
+{% endblock %}

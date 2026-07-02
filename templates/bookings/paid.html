@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Ödeme Tamamlandı</h2>
+<p>Rezervasyon onaylandı ✅</p>
+<p>Araç: {{ booking.car.title }}</p>
+<p>Tarih: {{ booking.start_date }} → {{ booking.end_date }}</p>
+<p>Toplam: {{ booking.total_price }} ₺</p>
+{% endblock %}

@@ -1,0 +1,7 @@
+<h2>Giriş Yap</h2>
+<form method="post">
+  {% csrf_token %}
+  <p>Kullanıcı adı: <input type="text" name="username" required></p>
+  <p>Şifre: <input type="password" name="password" required></p>
+  <button type="submit">Giriş</button>
+</form>

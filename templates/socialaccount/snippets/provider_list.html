@@ -1,0 +1,61 @@
+{% load socialaccount %}
+
+<style>
+  .social-divider {
+    display: flex;
+    align-items: center;
+    margin: 18px 0;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .social-divider::before,
+  .social-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+  .social-divider:not(:empty)::before {
+    margin-right: .75em;
+  }
+  .social-divider:not(:empty)::after {
+    margin-left: .75em;
+  }
+
+  .social-btn {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .social-btn.google {
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #444;
+  }
+  .social-btn.apple {
+    background: #000;
+    color: #fff;
+  }
+  .social-btn:hover {
+    filter: brightness(1.05);
+  }
+</style>
+
+<div class="social-divider">VEYA</div>
+
+<a href="{% provider_login_url 'google' %}" class="social-btn google">
+  <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" style="width:20px;height:20px">
+  Google ile Devam Et
+</a>
+
+<a href="{% provider_login_url 'apple' %}" class="social-btn apple">
+  <img src="https://www.svgrepo.com/show/303128/apple-logo.svg" alt="Apple" style="width:20px;height:20px;filter:invert(1)">
+  Apple ile Devam Et
+</a>

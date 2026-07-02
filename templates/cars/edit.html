@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}İlanı Düzenle · CarBnB{% endblock %}
+
+{% block content %}
+<h1>İlanı Düzenle</h1>
+
+{% if messages %}
+  <div class="msgs" style="margin:8px 0">
+    {% for m in messages %}
+      <div class="msg {{ m.tags }}" style="padding:8px;border-radius:6px;margin-bottom:6px;background:#f6f6f6">{{ m }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if form.errors or specs_form.errors or features_form.errors or form.non_field_errors or specs_form.non_field_errors %}
+  <pre style="white-space:pre-wrap;color:#b00020;background:#fff3f3;border:1px solid #ffd6d6;padding:10px;border-radius:8px">
+{{ form.errors }}{{ form.non_field_errors }}
+{{ specs_form.errors }}{{ specs_form.non_field_errors }}
+{{ features_form.errors }}{{ features_form.non_field_errors }}
+  </pre>
+{% endif %}
+
+<form id="carEditForm" method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+
+  <style>
+    .formgrid{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:14px 28px}
+    .f label{display:block;font-weight:600;margin-bottom:4px}
+    .f input,.f select,.f textarea{width:100%}
+    .section{margin:22px 0}
+    .section h3{margin:0 0 10px 0}
+    .tags{display:flex;flex-wrap:wrap;gap:8px}
+    .tag{border:1px solid #e8ecf3;border-radius:999px;padding:6px 10px;background:#fff}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+    .ph-card{border:1px solid #eee;border-radius:10px;padding:8px}
+    .ph-card img{width:100%;height:110px;object-fit:cover;border-radius:8px;border:1px solid #ddd;background:#f7f7f7}
+    .ph-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+    .ph-row input[type="number"]{width:72px}
+    .card{border:1px solid #eef1f6;border-radius:12px;background:#fff;padding:14px}
+    .feat-cols{display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:18px}
+    @media (max-width: 1024px){.feat-cols{grid-template-columns:1fr}}
+
+    /* === Boya/Hasar haritası === */
+    .damage-wrap{display:grid;grid-template-columns:420px 1fr;gap:18px}
+    @media (max-width: 900px){.damage-wrap{grid-template-columns:1fr}}
+    .legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .chip-legend{display:inline-flex;align-items:center;gap:8px;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;}
+    .lg-box{width:16px;height:12px;border:1px solid #cbd5e1;border-radius:3px}
+    .c-original{background:#f8fafc}
+    .c-local{background:#fed7aa}
+    .c-painted{background:#bfdbfe}
+    .c-replaced{background:#fecaca}
+    .map-card{border:1px dashed #e5e7eb;border-radius:12px;padding:12px;background:#fcfcff}
+
+    .car-svg{width:100%;max-width:400px;height:auto;display:block;margin:auto}
+    .car-silhouette{fill:#f3f4f6;stroke:#d1d5db;stroke-width:1.2}
+    .car-part{fill:#f8fafc;stroke:#94a3b8;stroke-width:1.5;cursor:pointer;transition:.15s}
+    .car-part:hover{filter:brightness(.96)}
+    .state-l{fill:#fed7aa !important;stroke:#fb923c;}
+    .state-b{fill:#bfdbfe !important;stroke:#60a5fa;}
+    .state-d{fill:#fecaca !important;stroke:#f87171;}
+    .btn{background:#0ea5e9;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+    .btn.secondary{background:#334155}
+    .btn.light{background:#e5e7eb;color:#111827}
+    .muted{color:#64748b}
+  </style>
+
+  <div class="section card">
+    <h3>Temel Bilgiler</h3>
+    <div class="formgrid">
+      <div class="f">{{ form.title.label_tag }} {{ form.title }}</div>
+      <div class="f">{{ form.daily_price.label_tag }} {{ form.daily_price }}</div>
+      <div class="f">{{ form.brand.label_tag }} {{ form.brand }}</div>
+      <div class="f">{{ form.model_name.label_tag }} {{ form.model_name }}</div>
+      <div class="f">{{ form.year.label_tag }} {{ form.year }}</div>
+      <div class="f">{{ form.engine.label_tag }} {{ form.engine }}</div>
+      <div class="f">
+        <label>İlan Tarihi</label>
+        <input type="date" value="{{ form.instance.listing_date|date:'Y-m-d' }}" disabled>
+        <input type="hidden" name="listing_date" value="{{ form.instance.listing_date|date:'Y-m-d' }}">
+      </div>
+      <div class="f">{{ form.color.label_tag }} {{ form.color }}</div>
+      <div class="f">{{ form.fuel_type.label_tag }} {{ form.fuel_type }}</div>
+      <div class="f">{{ form.transmission.label_tag }} {{ form.transmission }}</div>
+      <div class="f">
+        <label for="id_kilometers">Kilometre</label>
+        {{ form.kilometers }}
+        <small class="muted">sadece sayı (km)</small>
+      </div>
+      <div class="f">{{ form.body_type.label_tag }} {{ form.body_type }}</div>
+      <div class="f">{{ form.power_hp.label_tag }} {{ form.power_hp }}</div>
+      <div class="f">{{ form.engine_cc.label_tag }} {{ form.engine_cc }}</div>
+    </div>
+    <div class="f" style="margin-top:12px">{{ form.description.label_tag }} {{ form.description }}</div>
+  </div>
+
+  <div class="section card">
+    <h3>Konum</h3>
+    <div class="formgrid">
+      <div class="f">{{ form.location_text.label_tag }}{{ form.location_text }}</div>
+      <div class="f">{{ form.city.label_tag }}{{ form.city }}</div>
+      <div class="f">{{ form.district.label_tag }}{{ form.district }}</div>
+      <div class="f">{{ form.latitude.label_tag }}{{ form.latitude }}</div>
+      <div class="f">{{ form.longitude.label_tag }}{{ form.longitude }}</div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Teknik</h3>
+    <div class="formgrid">
+      <div class="f">{{ specs_form.version_name.label_tag }}{{ specs_form.version_name }}</div>
+
+      <div class="f" id="variant-select-wrap" {% if not variants %}style="display:none"{% endif %}>
+        <label for="id_variant_select">Alt Model / Varyant</label>
+        <select id="id_variant_select">
+          <option value="">Seçin…</option>
+          {% for v in variants %}
+            <option value="{{ v }}" {% if specs_form.instance.version_name == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+        <small class="muted">Seçim yapınca <strong>Versiyon Adı</strong> otomatik doldurulur.</small>
+      </div>
+
+      <div class="f">{{ specs_form.segment.label_tag }}{{ specs_form.segment }}</div>
+      <div class="f">{{ specs_form.drive_type.label_tag }}{{ specs_form.drive_type }}</div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Motor</h3>
+    <div class="formgrid">
+      <div class="f">{{ specs_form.power_kw.label_tag }}{{ specs_form.power_kw }}</div>
+      <div class="f">{{ specs_form.torque_nm.label_tag }}{{ specs_form.torque_nm }}</div>
+      <div class="f">{{ specs_form.top_speed_kmh.label_tag }}{{ specs_form.top_speed_kmh }}</div>
+      <div class="f">{{ specs_form.accel_0_100_s.label_tag }}{{ specs_form.accel_0_100_s }}</div>
+      <div class="f">{{ specs_form.cylinders.label_tag }}{{ specs_form.cylinders }}</div>
+      <div class="f">{{ specs_form.valves.label_tag }}{{ specs_form.valves }}</div>
+      <div class="f" style="align-self:end"><label>{{ specs_form.turbo }} Turbo</label></div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Ekonomi</h3>
+    <div class="formgrid">
+      <div class="f">{{ specs_form.cons_city.label_tag }}{{ specs_form.cons_city }}</div>
+      <div class="f">{{ specs_form.cons_highway.label_tag }}{{ specs_form.cons_highway }}</div>
+      <div class="f">{{ specs_form.cons_combined.label_tag }}{{ specs_form.cons_combined }}</div>
+      <div class="f">{{ specs_form.co2_g_km.label_tag }}{{ specs_form.co2_g_km }}</div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Boyutlar</h3>
+    <div class="formgrid">
+      <div class="f">{{ specs_form.wheelbase_mm.label_tag }}{{ specs_form.wheelbase_mm }}</div>
+      <div class="f">{{ specs_form.length_mm.label_tag }}{{ specs_form.length_mm }}</div>
+      <div class="f">{{ specs_form.width_mm.label_tag }}{{ specs_form.width_mm }}</div>
+      <div class="f">{{ specs_form.height_mm.label_tag }}{{ specs_form.height_mm }}</div>
+      <div class="f">{{ specs_form.trunk_l.label_tag }}{{ specs_form.trunk_l }}</div>
+      <div class="f">{{ specs_form.doors.label_tag }}{{ specs_form.doors }}</div>
+      <div class="f">{{ specs_form.tire_size.label_tag }}{{ specs_form.tire_size }}</div>
+      <div class="f">{{ specs_form.weight_kg.label_tag }}{{ specs_form.weight_kg }}</div>
+      <div class="f">{{ specs_form.max_weight_kg.label_tag }}{{ specs_form.max_weight_kg }}</div>
+    </div>
+  </div>
+
+  <!-- ===================== BOYA / HASAR HARİTASI ===================== -->
+  <div class="section card">
+    <h3>Boyalı veya Değişen Parça</h3>
+    <div class="legend" style="margin-bottom:10px">
+      <span class="chip-legend"><span class="lg-box c-original"></span> Orijinal</span>
+      <span class="chip-legend"><span class="lg-box c-local"></span> Lokal Boyalı</span>
+      <span class="chip-legend"><span class="lg-box c-painted"></span> Boyalı</span>
+      <span class="chip-legend"><span class="lg-box c-replaced"></span> Değişen</span>
+    </div>
+
+    <div class="damage-wrap">
+      <div class="map-card">
+        <!-- Silüetli SVG -->
+        <svg class="car-svg" viewBox="0 0 420 840" xmlns="http://www.w3.org/2000/svg" aria-label="Araç gövde haritası">
+          <g pointer-events="none">
+            <path class="car-silhouette"
+              d="M210 40 c35 0 70 8 92 22 l34 22 c9 6 15 18 15 30 v590 c0 12 -6 24 -15 30
+                 l-34 22 c-22 14 -57 22 -92 22 s-70 -8 -92 -22 l-34 -22 c-9 -6 -15 -18 -15 -30
+                 V114 c0 -12 6 -24 15 -30 l34 -22 c22 -14 57 -22 92 -22 z"/>
+            <circle cx="70"  cy="200" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+            <circle cx="350" cy="200" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+            <circle cx="70"  cy="640" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+            <circle cx="350" cy="640" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+          </g>
+
+          <!-- Tamponlar -->
+          <rect id="on_tampon"  class="car-part" x="135" y="60"  width="150" height="26" rx="8"/>
+          <rect id="arka_tampon" class="car-part" x="135" y="754" width="150" height="26" rx="8"/>
+
+          <!-- Kaput / Tavan / Bagaj -->
+          <rect id="kaput" class="car-part" x="135" y="92"  width="150" height="110" rx="14"/>
+          <rect id="tavan" class="car-part" x="135" y="214" width="150" height="310" rx="14"/>
+          <rect id="bagaj" class="car-part" x="135" y="538" width="150" height="110" rx="14"/>
+
+          <!-- Sağ taraf -->
+          <path id="sag_on_camurluk"   class="car-part" d="M334 124 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+          <path id="sag_on_kapi"       class="car-part" d="M334 238 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+          <path id="sag_arka_kapi"     class="car-part" d="M334 354 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+          <path id="sag_arka_camurluk" class="car-part" d="M334 470 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+
+          <!-- Sol taraf -->
+          <path id="sol_on_camurluk"   class="car-part" d="M58 124 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+          <path id="sol_on_kapi"       class="car-part" d="M58 238 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+          <path id="sol_arka_kapi"     class="car-part" d="M58 354 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+          <path id="sol_arka_camurluk" class="car-part" d="M58 470 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+        </svg>
+
+        <div class="damage-tools">
+          <button type="button" id="btnClearMap" class="btn light">Temizle</button>
+          <span class="muted">Tıkla: Orijinal → Lokal Boyalı → Boyalı → Değişen → Orijinal</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="f">
+          {{ form.damage_note.label_tag }}
+          {{ form.damage_note }}
+        </div>
+        {{ form.damage_json }}
+        <p class="muted" style="margin-top:8px">Kaydettiğinizde seçiminiz alıcılara görünecek.</p>
+      </div>
+    </div>
+  </div>
+  <!-- ================== /BOYA / HASAR HARİTASI ================== -->
+
+  <div class="section card">
+    <h3>Donanımlar</h3>
+    <div class="feat-cols">
+      <div>
+        <h4 style="margin:0 0 8px 0">Güvenlik</h4>
+        <div class="tags">
+          <label class="tag">{{ features_form.abs }} {{ features_form.abs.label }}</label>
+          <label class="tag">{{ features_form.esp_vsa }} {{ features_form.esp_vsa.label }}</label>
+          <label class="tag">{{ features_form.bas }} {{ features_form.bas.label }}</label>
+          <label class="tag">{{ features_form.child_lock }} {{ features_form.child_lock.label }}</label>
+          <label class="tag">{{ features_form.airbag_driver }} {{ features_form.airbag_driver.label }}</label>
+          <label class="tag">{{ features_form.airbag_passenger }} {{ features_form.airbag_passenger.label }}</label>
+          <label class="tag">{{ features_form.isofix }} {{ features_form.isofix.label }}</label>
+          <label class="tag">{{ features_form.blind_spot }} {{ features_form.blind_spot.label }}</label>
+          <label class="tag">{{ features_form.night_vision }} {{ features_form.night_vision.label }}</label>
+          <label class="tag">{{ features_form.lane_assist }} {{ features_form.lane_assist.label }}</label>
+          <label class="tag">{{ features_form.central_lock }} {{ features_form.central_lock.label }}</label>
+          <label class="tag">{{ features_form.hill_assist }} {{ features_form.hill_assist.label }}</label>
+          <label class="tag">{{ features_form.fatigue_detection }} {{ features_form.fatigue_detection.label }}</label>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin:0 0 8px 0">İç Donanım</h4>
+        <div class="tags">
+          <label class="tag">{{ features_form.hydraulic_steering }} {{ features_form.hydraulic_steering.label }}</label>
+          <label class="tag">{{ features_form.electric_windows }} {{ features_form.electric_windows.label }}</label>
+          <label class="tag">{{ features_form.climate }} {{ features_form.climate.label }}</label>
+          <label class="tag">{{ features_form.heated_seats }} {{ features_form.heated_seats.label }}</label>
+          <label class="tag">{{ features_form.memory_seats }} {{ features_form.memory_seats.label }}</label>
+          <label class="tag">{{ features_form.ventilated_seats }} {{ features_form.ventilated_seats.label }}</label>
+          <label class="tag">{{ features_form.cruise_control }} {{ features_form.cruise_control.label }}</label>
+          <label class="tag">{{ features_form.cooled_glovebox }} {{ features_form.cooled_glovebox.label }}</label>
+          <label class="tag">{{ features_form.trip_computer }} {{ features_form.trip_computer.label }}</label>
+          <label class="tag">{{ features_form.start_stop }} {{ features_form.start_stop.label }}</label>
+          <label class="tag">{{ features_form.rear_camera }} {{ features_form.rear_camera.label }}</label>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin:0 0 8px 0">Dış Donanım</h4>
+        <div class="tags">
+          <label class="tag">{{ features_form.fog_lights }} {{ features_form.fog_lights.label }}</label>
+          <label class="tag">{{ features_form.led_headlights }} {{ features_form.led_headlights.label }}</label>
+          <label class="tag">{{ features_form.xenon_led }} {{ features_form.xenon_led.label }}</label>
+          <label class="tag">{{ features_form.led_signature }} {{ features_form.led_signature.label }}</label>
+          <label class="tag">{{ features_form.sunroof }} {{ features_form.sunroof.label }}</label>
+          <label class="tag">{{ features_form.panoramic_roof }} {{ features_form.panoramic_roof.label }}</label>
+          <label class="tag">{{ features_form.roof_rails }} {{ features_form.roof_rails.label }}</label>
+          <label class="tag">{{ features_form.headlight_washers }} {{ features_form.headlight_washers.label }}</label>
+          <label class="tag">{{ features_form.alloy_wheels }} {{ features_form.alloy_wheels.label }}</label>
+          <label class="tag">{{ features_form.tow_hook }} {{ features_form.tow_hook.label }}</label>
+          <label class="tag">{{ features_form.park_sensor_front }} {{ features_form.park_sensor_front.label }}</label>
+          <label class="tag">{{ features_form.park_sensor_rear }} {{ features_form.park_sensor_rear.label }}</label>
+          <label class="tag">{{ features_form.auto_park }} {{ features_form.auto_park.label }}</label>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin:0 0 8px 0">Multimedya</h4>
+        <div class="tags">
+          <label class="tag">{{ features_form.android_auto }} {{ features_form.android_auto.label }}</label>
+          <label class="tag">{{ features_form.apple_carplay }} {{ features_form.apple_carplay.label }}</label>
+          <label class="tag">{{ features_form.bluetooth }} {{ features_form.bluetooth.label }}</label>
+          <label class="tag">{{ features_form.usb_aux }} {{ features_form.usb_aux.label }}</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Fotoğraflar</h3>
+    <div class="grid">
+      {% for p in photos %}
+        <div class="ph-card">
+          <img src="{{ p.image.url }}" alt="photo {{ forloop.counter }}">
+          <div class="ph-row">
+            <label>Kapak <input type="radio" name="cover" value="{{ p.id }}" {% if p.is_cover %}checked{% endif %}></label>
+            <label>Sıra <input type="number" name="pos_{{ p.id }}" value="{{ p.position }}" min="0" step="1"></label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <p style="margin-top:12px;">
+      <label for="id_images"><strong>Yeni foto ekle (opsiyonel)</strong></label><br>
+      <input id="id_images" type="file" name="images" multiple accept="image/*">
+      <span id="img_info" style="margin-left:8px;font-size:12px;color:#666"></span>
+    </p>
+  </div>
+
+  <p><button class="btn secondary" type="submit">Kaydet</button></p>
+</form>
+
+<script>
+  // Sunucudan gelen başlangıç state (model anahtarı + o/l/b/d)
+  window.DAMAGE_INIT = {{ damage_init_json|safe }};
+</script>
+
+<script>
+  (function () {
+    const brandSel = document.getElementById("id_brand");
+    const modelSel = document.getElementById("id_model_name");
+    const versionInput = document.getElementById("id_version_name");
+    const varWrap = document.getElementById("variant-select-wrap");
+    const varSelect = document.getElementById("id_variant_select");
+    const variantsUrl = "{% url 'cars:variants_api' %}";
+    const brandModelsUrl = "{% url 'cars:brand_models_api' %}";
+
+    if (varSelect && versionInput) {
+      varSelect.addEventListener("change", () => { versionInput.value = varSelect.value || ""; });
+    }
+
+    async function fillModels(brand, selected) {
+      if (!brandSel || !modelSel) return;
+      if (!brand) { modelSel.innerHTML = '<option value="">Önce marka seçin</option>'; return; }
+      try {
+        const r = await fetch(brandModelsUrl + "?brand=" + encodeURIComponent(brand), { headers: {"X-Requested-With":"XMLHttpRequest"} });
+        const data = await r.json();
+        const list = (data && data.models) ? data.models : [];
+        modelSel.innerHTML = "";
+        if (!list.length) { modelSel.innerHTML = '<option value="">Model bulunamadı</option>'; return; }
+        list.forEach(function(m){
+          const opt = document.createElement("option");
+          opt.value = m; opt.textContent = m;
+          if (selected && selected === m) opt.selected = true;
+          modelSel.appendChild(opt);
+        });
+      } catch(e) {
+        modelSel.innerHTML = '<option value="">Model bulunamadı</option>';
+      }
+    }
+
+    async function loadVariants(){
+      const b = brandSel ? brandSel.value : "";
+      const m = modelSel ? modelSel.value : "";
+      if (!b || !m || !varWrap || !varSelect) { if (varWrap) varWrap.style.display="none"; return; }
+      try{
+        const r = await fetch(`${variantsUrl}?brand=${encodeURIComponent(b)}&model=${encodeURIComponent(m)}`, { headers: {"X-Requested-With":"XMLHttpRequest"} });
+        const data = await r.json();
+        const list = (data && data.variants) ? data.variants : [];
+        if (!list.length) { varWrap.style.display="none"; varSelect.innerHTML = ""; return; }
+        varSelect.innerHTML = '<option value="">Seçin…</option>' + list.map(v => `<option value="${v}">${v}</option>`).join("");
+        if (versionInput && versionInput.value){
+          const idx = list.findIndex(v => v.toLowerCase() === String(versionInput.value).toLowerCase());
+          if (idx >= 0) varSelect.selectedIndex = idx + 1;
+        }
+        varWrap.style.display="block";
+      }catch(e){
+        varWrap.style.display="none";
+        varSelect.innerHTML = "";
+      }
+    }
+
+    const km = document.getElementById("id_kilometers");
+    if (km) { km.setAttribute("inputmode","numeric"); km.setAttribute("min","0"); km.setAttribute("step","1"); }
+
+    document.addEventListener("DOMContentLoaded", async function(){
+      if (brandSel) { await fillModels(brandSel.value || "", modelSel ? modelSel.value : ""); }
+      await loadVariants();
+
+      // ==== Boya/Hasar Haritası JS ====
+      const form = document.getElementById("carEditForm");
+      const hidden = document.getElementById("id_damage_json");
+
+      // UI (TR id) -> Model (EN key)
+      const KEYMAP = {
+        "kaput":"hood","tavan":"roof","bagaj":"trunk",
+        "on_tampon":"bumper_front","arka_tampon":"bumper_rear",
+        "sol_on_camurluk":"fender_fl","sol_on_kapi":"door_fl","sol_arka_kapi":"door_rl","sol_arka_camurluk":"fender_rl",
+        "sag_on_camurluk":"fender_fr","sag_on_kapi":"door_fr","sag_arka_kapi":"door_rr","sag_arka_camurluk":"fender_rr"
+      };
+      const UI_PARTS = Object.keys(KEYMAP);
+
+      // Durum sırası: o → l → b → d → o
+      const order = ["o","l","b","d"];
+      const nextState = (s) => order[(order.indexOf(s) + 1) % order.length];
+
+      // Başlangıç (model anahtarları + o/l/b/d)
+      let modelState = {};
+      try { modelState = (window.DAMAGE_INIT && typeof window.DAMAGE_INIT === "object") ? {...window.DAMAGE_INIT} : {}; }
+      catch(e){ modelState = {}; }
+
+      function applyClasses(){
+        UI_PARTS.forEach(uiId=>{
+          const el = document.getElementById(uiId); if(!el) return;
+          el.classList.remove("state-l","state-b","state-d");
+          const val = modelState[KEYMAP[uiId]] || "o";
+          if (val === "l") el.classList.add("state-l");
+          else if (val === "b") el.classList.add("state-b");
+          else if (val === "d") el.classList.add("state-d");
+        });
+      }
+
+      UI_PARTS.forEach(uiId=>{
+        const el = document.getElementById(uiId);
+        if(!el) return;
+        el.addEventListener("click", ()=>{
+          const mk = KEYMAP[uiId];
+          const cur = modelState[mk] || "o";
+          const nx = nextState(cur);
+          if (nx === "o") delete modelState[mk]; else modelState[mk] = nx;
+          applyClasses();
+        });
+      });
+
+      const btnClear = document.getElementById("btnClearMap");
+      if (btnClear){ btnClear.addEventListener("click", ()=>{ modelState = {}; applyClasses(); }); }
+
+      applyClasses();
+
+      if (form && hidden){
+        form.addEventListener("submit", ()=>{
+          hidden.value = JSON.stringify(modelState || {});
+        });
+      }
+    });
+  })();
+
+  // foto input sayacı
+  (function(){
+    const imgInput = document.getElementById("id_images");
+    const imgInfo = document.getElementById("img_info");
+    if (imgInput && imgInfo) {
+      imgInput.addEventListener("change", () => {
+        const cnt = (imgInput.files || []).length;
+        imgInfo.textContent = cnt ? `${cnt} dosya seçildi` : "";
+      });
+    }
+  })();
+</script>
+{% endblock %}

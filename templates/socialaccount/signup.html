@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Sosyal Kayıt · CarBnB{% endblock %}
+
+{% block content %}
+<style>
+  .auth-wrap{
+    min-height: calc(100vh - 120px);
+    display:grid; place-items:center; padding:24px;
+    background: radial-gradient(1200px 600px at 10% -10%, #eef3ff, transparent),
+                radial-gradient(900px 500px at 110% 10%, #f7f9ff, transparent);
+  }
+  .auth-card{
+    width:100%; max-width:480px; background:#fff;
+    border:1px solid #e9eef6; border-radius:16px;
+    box-shadow:0 10px 30px rgba(25,50,100,.07); padding:28px;
+  }
+  .auth-title{ margin:0 0 6px; font-size:26px; font-weight:800; }
+  .auth-sub{ margin:0 0 18px; color:#6b7280; font-size:14px; }
+  .form-group{ margin-bottom:14px; }
+  label{ display:block; font-weight:600; margin-bottom:6px; color:#374151; }
+  .input{
+    width:100%; padding:12px 14px; border:1px solid #dce3ee; border-radius:10px;
+    font-size:16px; background:#fbfdff; outline:none;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .input:focus{ border-color:#6e8efb; box-shadow:0 0 0 4px rgba(110,142,251,.15); background:#fff; }
+  .btn{
+    width:100%; display:flex; align-items:center; justify-content:center;
+    padding:12px 14px; border:none; border-radius:10px;
+    background:linear-gradient(135deg, #6e8efb, #a777e3);
+    color:#fff; font-weight:700; font-size:16px; cursor:pointer;
+    transition: transform .05s ease, filter .15s ease;
+  }
+  .btn:hover{ filter:brightness(1.05); }
+  .btn:active{ transform:translateY(1px); }
+</style>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">{% trans "Hesabını Tamamla" %}</h1>
+    <p class="auth-sub">{% trans "Google veya Apple hesabınla geldin, birkaç bilgi daha lazım." %}</p>
+
+    <form method="post" action="">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn" type="submit">{% trans "Devam Et" %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

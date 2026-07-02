@@ -1,0 +1,158 @@
+{# cars/partials/spec_table_like_sb.html #}
+{# Sahibinden benzeri: başlıklar + gri sol hücreli tablo düzeni #}
+{% with S=car.specs %}
+<style>
+  .tt-wrap{padding:0 0 12px}
+  .tt-title{font-weight:700;color:#0f172a;margin:18px 0 8px 0;font-size:18px}
+  .tt{width:100%;border:1px solid #e8edf3;border-top:none;border-bottom:none}
+  .tt .tr{display:grid;grid-template-columns:42% 1fr;border-top:1px solid #e8edf3}
+  .tt .th{background:#f8fafc;color:#475569;padding:10px 12px}
+  .tt .td{padding:10px 12px}
+  @media (max-width:650px){.tt .tr{grid-template-columns:1fr}}
+</style>
+
+<div class="tt-wrap">
+  {% if S or car %}
+    {# — GENEL BAKIŞ — #}
+    <div class="tt-title">Genel Bakış</div>
+    <div class="tt">
+      <div class="tr">
+        <div class="th">Segment</div>
+        <div class="td">{{ S.segment|default:"C Segment" }}</div>
+      </div>
+      <div class="tr">
+        <div class="th">Kasa Tipi / Kapı Sayısı</div>
+        <div class="td">
+          {{ car.get_body_type_display|default:car.body_type }}
+          {% if S.doors %} / {{ S.doors }} Kapı{% endif %}
+        </div>
+      </div>
+      <div class="tr">
+        <div class="th">Motor Tipi</div>
+        <div class="td">
+          {{ car.get_fuel_type_display|default:car.fuel_type }}
+          {% if S.cylinders %} / {{ S.cylinders }} silindir{% endif %}
+        </div>
+      </div>
+      <div class="tr">
+        <div class="th">Üretim Yılı</div>
+        <div class="td">{{ car.year|default:"—" }}</div>
+      </div>
+
+      {% if S.cons_city or S.cons_highway %}
+      <div class="tr">
+        <div class="th">Yakıt Tüketimi</div>
+        <div class="td">
+          {% if S.cons_city %}{{ S.cons_city }} lt (şehir içi){% endif %}
+          {% if S.cons_highway %}{% if S.cons_city %} / {% endif %}{{ S.cons_highway }} lt (şehir dışı){% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if car.power_hp %}
+      <div class="tr">
+        <div class="th">Motor Gücü</div>
+        <div class="td">{{ car.power_hp }} hp</div>
+      </div>
+      {% endif %}
+
+      <div class="tr">
+        <div class="th">Şanzıman</div>
+        <div class="td">
+          {{ car.get_transmission_display|default:car.transmission }}
+          {% if S.drive_type %}
+            / {{ S.get_drive_type_display|default:S.drive_type }}
+          {% else %}
+            / Önden Çekiş
+          {% endif %}
+        </div>
+      </div>
+
+      {% if S.accel_0_100_s %}
+      <div class="tr">
+        <div class="th">Hızlanma 0–100 km/s</div>
+        <div class="td">{{ S.accel_0_100_s }} sn</div>
+      </div>
+      {% endif %}
+      {% if S.top_speed_kmh %}
+      <div class="tr">
+        <div class="th">Azami Sürat</div>
+        <div class="td">{{ S.top_speed_kmh }} km/saat</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# — MOTOR VE PERFORMANS — #}
+    <div class="tt-title">Motor ve Performans</div>
+    <div class="tt">
+      {% if car.engine_cc %}
+      <div class="tr">
+        <div class="th">Motor Hacmi</div>
+        <div class="td">{{ car.engine_cc }} cc</div>
+      </div>
+      {% endif %}
+      {% if car.power_hp or S.power_kw %}
+      <div class="tr">
+        <div class="th">Maksimum Güç</div>
+        <div class="td">
+          {% if car.power_hp %}{{ car.power_hp }} hp{% endif %}
+          {% if S.power_kw %}{% if car.power_hp %} ({% endif %}{{ S.power_kw }} kW{% if car.power_hp %}){% endif %}{% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% if S.torque_nm %}
+      <div class="tr">
+        <div class="th">Maksimum Tork</div>
+        <div class="td">{{ S.torque_nm }} Nm</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# — YAKIT TÜKETİMİ — #}
+    <div class="tt-title">Yakıt Tüketimi</div>
+    <div class="tt">
+      <div class="tr">
+        <div class="th">Yakıt Tipi</div>
+        <div class="td">{{ car.get_fuel_type_display|default:car.fuel_type }}</div>
+      </div>
+      {% if S.cons_city %}
+      <div class="tr"><div class="th">Şehir içi (100 km’de)</div><div class="td">{{ S.cons_city }} lt</div></div>
+      {% endif %}
+      {% if S.cons_highway %}
+      <div class="tr"><div class="th">Şehir dışı (100 km’de)</div><div class="td">{{ S.cons_highway }} lt</div></div>
+      {% endif %}
+      {% if S.cons_combined %}
+      <div class="tr"><div class="th">Ortalama (100 km’de)</div><div class="td">{{ S.cons_combined }} lt</div></div>
+      {% endif %}
+    </div>
+
+    {# — BOYUTLAR — #}
+    <div class="tt-title">Boyutlar</div>
+    <div class="tt">
+      {% if S.doors %}
+      <div class="tr"><div class="th">Koltuk / Kapı</div><div class="td">5 Koltuk / {{ S.doors }} Kapı</div></div>
+      {% endif %}
+      {% if S.length_mm %}
+      <div class="tr"><div class="th">Uzunluk</div><div class="td">{{ S.length_mm }} mm</div></div>
+      {% endif %}
+      {% if S.width_mm %}
+      <div class="tr"><div class="th">Genişlik</div><div class="td">{{ S.width_mm }} mm</div></div>
+      {% endif %}
+      {% if S.height_mm %}
+      <div class="tr"><div class="th">Yükseklik</div><div class="td">{{ S.height_mm }} mm</div></div>
+      {% endif %}
+      {% if S.trunk_l %}
+      <div class="tr"><div class="th">Bagaj Kapasitesi</div><div class="td">{{ S.trunk_l }} L</div></div>
+      {% endif %}
+      {% if S.weight_kg %}
+      <div class="tr"><div class="th">Net Ağırlık</div><div class="td">{{ S.weight_kg }} kg</div></div>
+      {% endif %}
+      {% if S.tire_size %}
+      <div class="tr"><div class="th">Lastik Ölçüleri</div><div class="td">{{ S.tire_size }}</div></div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="pad">Teknik özellik eklenmemiş.</div>
+  {% endif %}
+</div>
+{% endwith %}

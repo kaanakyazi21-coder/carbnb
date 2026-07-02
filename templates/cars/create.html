@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}İlan Ver · CarBnB{% endblock %}
+
+{% block content %}
+<style>
+  :root{--bg:#f6f8fc;--card:#fff;--muted:#6b7280;--ink:#0b132b;--line:#e8ecf3;--brand:#6c3ddb}
+  .page{max-width:1000px;margin:0 auto;padding:16px 0}
+  .card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px}
+  .legend{font-weight:700;color:var(--ink);margin-bottom:10px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .f{display:flex;flex-direction:column;gap:6px}
+  .f>label{font-size:14px;color:#374151;font-weight:600}
+  input[type="text"],input[type="number"],input[type="date"],textarea,select{width:100%;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;min-height:42px}
+  textarea{min-height:120px;resize:vertical}
+  .checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px}
+  .cb{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;min-height:42px}
+  .cb input[type="checkbox"]{width:18px;height:18px;accent-color:var(--brand)}
+  .help{color:var(--muted);font-size:13px}
+  .actions{display:flex;gap:10px}
+  .btn{padding:10px 16px;border:0;border-radius:10px;background:var(--ink);color:#fff;font-weight:700}
+  a.link{align-self:center;color:var(--brand);text-decoration:none}
+
+  /* ==== Boya/Hasar Haritası ==== */
+  .legend-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+  .chip-legend{display:inline-flex;align-items:center;gap:8px;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px}
+  .lg-box{width:16px;height:12px;border:1px solid #cbd5e1;border-radius:3px}
+  .c-original{background:#f8fafc}.c-local{background:#fed7aa}.c-painted{background:#bfdbfe}.c-replaced{background:#fecaca}
+  .damage-wrap{display:grid;grid-template-columns:420px 1fr;gap:18px}
+  @media (max-width:900px){.damage-wrap{grid-template-columns:1fr}}
+  .map-card{border:1px dashed #e5e7eb;border-radius:12px;padding:12px;background:#fcfcff}
+
+  .car-svg{width:100%;max-width:400px;height:auto;display:block;margin:auto}
+  .car-silhouette{fill:#f3f4f6;stroke:#d1d5db;stroke-width:1.2}
+  .car-part{fill:#f8fafc;stroke:#94a3b8;stroke-width:1.5;cursor:pointer;transition:.15s}
+  .car-part:hover{filter:brightness(.96)}
+  .state-local{fill:#fed7aa!important;stroke:#fb923c}
+  .state-painted{fill:#bfdbfe!important;stroke:#60a5fa}
+  .state-replaced{fill:#fecaca!important;stroke:#f87171}
+  .btn-light{background:#e5e7eb;color:#111827;border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+</style>
+
+<div class="page">
+  <h2 class="h2">İlan Ver</h2>
+
+  {% if messages %}
+    <ul style="list-style:none;padding:0;margin:0 0 12px 0">
+      {% for message in messages %}
+        <li style="padding:10px 12px;border-radius:10px;margin-bottom:8px;background:#f5f7fb;color:#0b132b;border:1px solid #e8ecf3">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form id="carCreateForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- 1) İLAN BİLGİLERİ -->
+    <section class="card">
+      <div class="legend">İlan Bilgileri</div>
+      <div class="grid-2">
+        <div class="f"><label for="{{ form.title.id_for_label }}">İlan Başlığı</label>{{ form.title }}</div>
+        <div class="f"><label for="{{ form.listing_date.id_for_label }}">İlan Tarihi</label>{{ form.listing_date }}</div>
+        <div class="f"><label for="{{ form.daily_price.id_for_label }}">Günlük Fiyat (₺)</label>{{ form.daily_price }}</div>
+        <div class="f"><label for="{{ form.kilometers.id_for_label }}">Kilometre (KM)</label>{{ form.kilometers }}<small class="help">Sadece sayı</small></div>
+        <div class="f" style="grid-column:1/-1"><label for="{{ form.description.id_for_label }}">Açıklama</label>{{ form.description }}</div>
+      </div>
+    </section>
+
+    <!-- 2) ARAÇ BİLGİLERİ -->
+    <section class="card">
+      <div class="legend">Araç Bilgileri</div>
+      <div class="grid-2">
+        <div class="f"><label for="{{ form.brand.id_for_label }}">Marka</label>{{ form.brand }}</div>
+        <div class="f"><label for="{{ form.model_name.id_for_label }}">Model</label>{{ form.model_name }}</div>
+        <div class="f"><label for="{{ form.year.id_for_label }}">Yıl</label>{{ form.year }}</div>
+        <div class="f"><label for="{{ form.color.id_for_label }}">Renk</label>{{ form.color }}</div>
+        <div class="f"><label for="{{ form.fuel_type.id_for_label }}">Yakıt Tipi</label>{{ form.fuel_type }}</div>
+        <div class="f"><label for="{{ form.transmission.id_for_label }}">Vites</label>{{ form.transmission }}</div>
+        <div class="f"><label for="{{ form.body_type.id_for_label }}">Gövde Tipi</label>{{ form.body_type }}</div>
+        <div class="f"><label for="{{ form.engine.id_for_label }}">Motor (Versiyon/Donanım)</label>{{ form.engine }}<small class="help">Örn: 1.6 TDI, Premium…</small></div>
+        <div class="f"><label for="{{ form.engine_cc.id_for_label }}">Motor Hacmi (cc)</label>{{ form.engine_cc }}</div>
+        <div class="f"><label for="{{ form.power_hp.id_for_label }}">Beygir (HP)</label>{{ form.power_hp }}</div>
+      </div>
+    </section>
+
+    <!-- 3) KONUM -->
+    <section class="card">
+      <div class="legend">Konum</div>
+      <div class="grid-2">
+        <div class="f"><label for="{{ form.location_text.id_for_label }}">Adres / Konum</label>{{ form.location_text }}</div>
+        <div class="f"><label for="{{ form.city.id_for_label }}">İl</label>{{ form.city }}</div>
+        <div class="f"><label for="{{ form.district.id_for_label }}">İlçe</label>{{ form.district }}</div>
+        <div class="f"><label for="{{ form.latitude.id_for_label }}">Enlem</label>{{ form.latitude }}<small class="help">Örn: 41.0082</small></div>
+        <div class="f"><label for="{{ form.longitude.id_for_label }}">Boylam</label>{{ form.longitude }}<small class="help">Örn: 28.9784</small></div>
+      </div>
+    </section>
+
+    <!-- 4) TEKNİK ÖZELLİKLER -->
+    <section class="card">
+      <div class="legend">Teknik Özellikler</div>
+      <div class="grid-2">
+        <div class="f"><label for="{{ specs_form.version_name.id_for_label }}">Versiyon Adı</label>{{ specs_form.version_name }}</div>
+        <div class="f" id="variant-select-wrap" style="display:none">
+          <label for="id_variant_select">Alt Model / Varyant</label>
+          <select id="id_variant_select"><option value="">Seçin…</option></select>
+          <small class="help">Seçim yapınca <b>Versiyon Adı</b> otomatik dolar.</small>
+        </div>
+        <div class="f"><label for="{{ specs_form.segment.id_for_label }}">Segment</label>{{ specs_form.segment }}</div>
+        <div class="f"><label for="{{ specs_form.drive_type.id_for_label }}">Çekiş</label>{{ specs_form.drive_type }}</div>
+      </div>
+    </section>
+
+    <!-- 5) MOTOR & PERFORMANS -->
+    <section class="card">
+      <div class="legend">Motor &amp; Performans</div>
+      <div class="grid-3">
+        <div class="f"><label>Güç (kW)</label>{{ specs_form.power_kw }}</div>
+        <div class="f"><label>Tork (Nm)</label>{{ specs_form.torque_nm }}</div>
+        <div class="f"><label>Son Hız</label>{{ specs_form.top_speed_kmh }}</div>
+        <div class="f"><label>0–100</label>{{ specs_form.accel_0_100_s }}</div>
+        <div class="f"><label>Silindir</label>{{ specs_form.cylinders }}</div>
+        <div class="f"><label>Valf</label>{{ specs_form.valves }}</div>
+        <div class="f" style="align-self:end"><label>{{ specs_form.turbo }} Turbo</label></div>
+      </div>
+    </section>
+
+    <!-- 6) YAKIT & EKONOMİ -->
+    <section class="card">
+      <div class="legend">Yakıt &amp; Ekonomi</div>
+      <div class="grid-3">
+        <div class="f"><label>Şehir içi</label>{{ specs_form.cons_city }}</div>
+        <div class="f"><label>Şehir dışı</label>{{ specs_form.cons_highway }}</div>
+        <div class="f"><label>Ortalama</label>{{ specs_form.cons_combined }}</div>
+        <div class="f"><label>CO₂</label>{{ specs_form.co2_g_km }}</div>
+      </div>
+    </section>
+
+    <!-- 7) BOYUTLAR -->
+    <section class="card">
+      <div class="legend">Boyutlar</div>
+      <div class="grid-3">
+        <div class="f"><label>Dingil</label>{{ specs_form.wheelbase_mm }}</div>
+        <div class="f"><label>Uzunluk</label>{{ specs_form.length_mm }}</div>
+        <div class="f"><label>Genişlik</label>{{ specs_form.width_mm }}</div>
+        <div class="f"><label>Yükseklik</label>{{ specs_form.height_mm }}</div>
+        <div class="f"><label>Bagaj</label>{{ specs_form.trunk_l }}</div>
+        <div class="f"><label>Kapı</label>{{ specs_form.doors }}</div>
+        <div class="f"><label>Lastik</label>{{ specs_form.tire_size }}</div>
+        <div class="f"><label>Ağırlık</label>{{ specs_form.weight_kg }}</div>
+        <div class="f"><label>Maks. Ağırlık</label>{{ specs_form.max_weight_kg }}</div>
+      </div>
+    </section>
+
+    <!-- 7.5) BOYALI / DEĞİŞEN PARÇA -->
+    <section class="card">
+      <div class="legend">Boyalı veya Değişen Parça</div>
+      <div class="legend-row">
+        <span class="chip-legend"><span class="lg-box c-original"></span> Orijinal</span>
+        <span class="chip-legend"><span class="lg-box c-local"></span> Lokal Boyalı</span>
+        <span class="chip-legend"><span class="lg-box c-painted"></span> Boyalı</span>
+        <span class="chip-legend"><span class="lg-box c-replaced"></span> Değişen</span>
+      </div>
+
+      <div class="damage-wrap">
+        <div class="map-card">
+          {% comment %} GERÇEKÇİ SİLÜETLİ SVG {% endcomment %}
+          <svg class="car-svg" viewBox="0 0 420 840" xmlns="http://www.w3.org/2000/svg" aria-label="Araç gövde haritası">
+            <g pointer-events="none">
+              <path class="car-silhouette" d="M210 40 c35 0 70 8 92 22 l34 22 c9 6 15 18 15 30 v590 c0 12-6 24-15 30 l-34 22 c-22 14-57 22-92 22 s-70-8-92-22 l-34-22 c-9-6-15-18-15-30 V114 c0-12 6-24 15-30 l34-22 c22-14 57-22 92-22 z"/>
+              <circle cx="70"  cy="200" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+              <circle cx="350" cy="200" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+              <circle cx="70"  cy="640" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+              <circle cx="350" cy="640" r="26" fill="#e5e7eb" stroke="#cbd5e1"/>
+            </g>
+
+            <rect id="on_tampon"  class="car-part" x="135" y="60"  width="150" height="26" rx="8"/>
+            <rect id="arka_tampon" class="car-part" x="135" y="754" width="150" height="26" rx="8"/>
+
+            <rect id="kaput" class="car-part" x="135" y="92"  width="150" height="110" rx="14"/>
+            <rect id="tavan" class="car-part" x="135" y="214" width="150" height="310" rx="14"/>
+            <rect id="bagaj" class="car-part" x="135" y="538" width="150" height="110" rx="14"/>
+
+            <path id="sag_on_camurluk"   class="car-part" d="M334 124 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+            <path id="sag_on_kapi"       class="car-part" d="M334 238 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+            <path id="sag_arka_kapi"     class="car-part" d="M334 354 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+            <path id="sag_arka_camurluk" class="car-part" d="M334 470 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+
+            <path id="sol_on_camurluk"   class="car-part" d="M58 124 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+            <path id="sol_on_kapi"       class="car-part" d="M58 238 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+            <path id="sol_arka_kapi"     class="car-part" d="M58 354 h28 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-96 a10 10 0 0 1 10 -10 z"/>
+            <path id="sol_arka_camurluk" class="car-part" d="M58 470 h28 a10 10 0 0 1 10 10 v78 a10 10 0 0 1 -10 10 h-28 a10 10 0 0 1 -10 -10 v-78 a10 10 0 0 1 10 -10 z"/>
+          </svg>
+
+          <div class="damage-tools" style="margin-top:10px">
+            <button type="button" id="btnClearMap" class="btn-light">Temizle</button>
+            <span class="help">Tıkla: Orijinal → Lokal Boyalı → Boyalı → Değişen → Orijinal</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="f"><label for="{{ form.damage_note.id_for_label }}">Hasar Notu</label>{{ form.damage_note }}</div>
+          {{ form.damage_json }} {# gizli JSON #}
+        </div>
+      </div>
+    </section>
+
+    <!-- 8) DONANIM -->
+    <section class="card">
+      <div class="legend">Donanım</div>
+      <div class="checks">
+        {% for field in features_form.visible_fields %}
+          <label class="cb">{{ field }} <span>{{ field.label }}</span></label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- 9) FOTOĞRAFLAR -->
+    <section class="card">
+      <div class="legend">Fotoğraflar</div>
+      <p class="help" style="margin:0 0 8px 0">En az <b>4</b>, en fazla <b>12</b> görsel seçin. İlk görsel kapak olur.</p>
+      <input type="file" name="images" accept="image/*" multiple>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="btn">Kaydet</button>
+      <a href="{% url 'cars:my_cars' %}" class="link">İlanlarıma dön</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  /* Marka → Model → Varyant (senin mevcut endpoint’lerin) */
+  const brandSel=document.getElementById("id_brand");
+  const modelSel=document.getElementById("id_model_name");
+  const versionInput=document.getElementById("id_version_name");
+  const varWrap=document.getElementById("variant-select-wrap");
+  const varSelect=document.getElementById("id_variant_select");
+  const variantsUrl="{% url 'cars:variants_api' %}";
+  const brandModelsUrl="{% url 'cars:brand_models_api' %}";
+
+  async function fillModels(brand){
+    if(!brandSel||!modelSel) return;
+    if(!brand){modelSel.innerHTML='<option value="">Önce marka seçin</option>';return;}
+    try{
+      const r=await fetch(brandModelsUrl+"?brand="+encodeURIComponent(brand),{headers:{"X-Requested-With":"XMLHttpRequest"}});
+      const data=await r.json(); const list=(data&&data.models)?data.models:[];
+      modelSel.innerHTML=""; if(!list.length){modelSel.innerHTML='<option value="">Model bulunamadı</option>';return;}
+      list.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m;modelSel.appendChild(o);});
+    }catch(e){modelSel.innerHTML='<option value="">Model bulunamadı</option>';}
+  }
+  async function loadVariants(){
+    const b=brandSel?brandSel.value:""; const m=modelSel?modelSel.value:"";
+    if(!b||!m||!varWrap||!varSelect){if(varWrap)varWrap.style.display="none";return;}
+    try{
+      const r=await fetch(`${variantsUrl}?brand=${encodeURIComponent(b)}&model=${encodeURIComponent(m)}`,{headers:{"X-Requested-With":"XMLHttpRequest"}});
+      const data=await r.json(); const list=(data&&data.variants)?data.variants:[];
+      if(!list.length){varWrap.style.display="none";return;}
+      varSelect.innerHTML='<option value="">Seçin…</option>'+list.map(v=>`<option value="${v}">${v}</option>`).join("");
+      if(versionInput&&versionInput.value){
+        const idx=list.findIndex(v=>v.toLowerCase()===String(versionInput.value).toLowerCase());
+        if(idx>=0) varSelect.selectedIndex=idx+1;
+      }
+      varWrap.style.display="block";
+    }catch(e){varWrap.style.display="none";}
+  }
+  if(brandSel) brandSel.addEventListener("change", async e=>{await fillModels(e.target.value); if(versionInput) versionInput.value=""; await loadVariants();});
+  if(modelSel) modelSel.addEventListener("change", async()=>{if(versionInput) versionInput.value=""; await loadVariants();});
+
+  /* Numeric helper */
+  const km=document.getElementById("id_kilometers"); if(km){km.setAttribute("inputmode","numeric");km.setAttribute("min","0");km.setAttribute("step","1");}
+
+  /* ==== Boya/Hasar JS ==== */
+  const form=document.getElementById("carCreateForm");
+  const hidden=document.getElementById("id_damage_json");
+  const order=["original","local_paint","painted","replaced"];
+  const nextState=s=>order[(order.indexOf(s)+1)%order.length];
+  let state={}; try{state=hidden&&hidden.value?JSON.parse(hidden.value):{}}catch(e){state={};}
+  const parts=["kaput","tavan","bagaj","on_tampon","arka_tampon","sag_on_camurluk","sag_on_kapi","sag_arka_kapi","sag_arka_camurluk","sol_on_camurluk","sol_on_kapi","sol_arka_kapi","sol_arka_camurluk"];
+  function applyClasses(){
+    parts.forEach(id=>{const el=document.getElementById(id); if(!el) return;
+      el.classList.remove("state-local","state-painted","state-replaced");
+      const v=state[id]; if(v==="local_paint") el.classList.add("state-local");
+      else if(v==="painted") el.classList.add("state-painted");
+      else if(v==="replaced") el.classList.add("state-replaced");
+    });
+  }
+  parts.forEach(id=>{const el=document.getElementById(id); if(!el) return;
+    el.addEventListener("click",()=>{const cur=state[id]||"original"; const nx=nextState(cur); if(nx==="original") delete state[id]; else state[id]=nx; applyClasses();});
+  });
+  const btnClear=document.getElementById("btnClearMap"); if(btnClear){btnClear.addEventListener("click",()=>{state={};applyClasses();});}
+  applyClasses();
+  if(form&&hidden){form.addEventListener("submit",()=>{hidden.value=JSON.stringify(state||{});});}
+})();
+</script>
+{% endblock %}

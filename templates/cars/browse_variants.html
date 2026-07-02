@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ brand }} {{ model }} Varyantları · CarBnB{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:0 auto;padding:16px 0">
+  <h2 style="margin:0 0 14px 0">{{ brand }} {{ model }} Varyantları</h2>
+
+  <ul style="list-style:none;padding:0;margin:0">
+    {% for v in variants %}
+      <li style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border:1px solid #eef1f6;border-radius:12px;background:#fff">
+        <a href="{% url 'cars:car_list' %}?brand={{ brand }}&model={{ model }}&variant={{ v.variant|urlencode }}"
+           style="text-decoration:none;color:#0b132b;font-weight:600">
+          {{ v.variant }}
+        </a>
+        <span style="color:#8a94a6">{{ v.count }}</span>
+      </li>
+    {% empty %}
+      <li style="padding:12px 14px;color:#8a94a6;border:1px solid #eef1f6;border-radius:12px;background:#fff">
+        Bu modele ait varyant bulunamadı.
+      </li>
+    {% endfor %}
+  </ul>
+
+  <div style="margin-top:12px;font-size:14px">
+    <a href="{% url 'cars:cars_by_brand_models' brand %}">← {{ brand }} modellerine dön</a> ·
+    <a href="{% url 'cars:car_list' %}?brand={{ brand }}">Tüm {{ brand }} ilanları</a>
+  </div>
+</div>
+{% endblock %}

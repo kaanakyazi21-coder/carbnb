@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}İlanlarım · CarBnB{% endblock %}
+
+{% block content %}
+<div style="max-width:1200px;margin:0 auto;padding:16px 0">
+  <h2 style="margin:0 0 12px 0">İlanlarım</h2>
+
+  <table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="background:#f5f7fb">
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3;width:100px">Foto</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">İlan Başlığı</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">Seri / Model</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">Yıl</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">Motor</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">KM</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">Fiyat</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">Tarih</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e8ecf3">İl / İlçe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for car in cars %}
+        <tr style="border-bottom:1px solid #f0f3f9">
+          <td style="padding:10px">
+            <a href="{% url 'cars:car_detail' car.pk %}" style="display:block">
+              {% if car.cover_url %}
+                <img src="{{ car.cover_url }}" alt="{{ car.title }}"
+                     style="width:88px;height:66px;object-fit:cover;border-radius:8px;display:block">
+              {% else %}
+                <img src="{% static 'img/no-photo.png' %}" alt="Fotoğraf yok"
+                     style="width:88px;height:66px;object-fit:cover;border-radius:8px;display:block">
+              {% endif %}
+            </a>
+          </td>
+
+          <td style="padding:10px">
+            <a href="{% url 'cars:car_detail' car.pk %}" style="font-weight:600;color:#0b132b;text-decoration:none">
+              {{ car.title }}
+            </a>
+            <div style="font-size:12px;color:#8a94a6">
+              {{ car.listing_date|date:"d F Y" }}
+              {% if request.user.is_authenticated and car.owner_id == request.user.id %}
+                · <a href="{% url 'cars:car_update' car.pk %}" style="color:#6c3ddb">Düzenle</a>
+              {% endif %}
+              {% if car.is_active %}
+                · <span style="color:#16a34a;font-weight:700">Yayında</span>
+              {% else %}
+                · <span style="color:#b91c1c;font-weight:700">Pasif</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <td style="padding:10px">
+            {{ car.brand }}<br>
+            <span style="font-size:12px;color:#8a94a6">
+              {{ car.model_name }} · {{ car.get_fuel_type_display }} · {{ car.get_transmission_display }}
+            </span>
+          </td>
+
+          <td style="padding:10px">{{ car.year }}</td>
+          <td style="padding:10px">{{ car.engine|default:"-" }}</td>
+          <td style="padding:10px">{{ car.kilometers|default:"-" }}</td>
+
+          <td style="padding:10px">
+            <span style="color:#c1121f;font-weight:700">{{ car.price_per_day|floatformat:0 }} ₺</span>
+          </td>
+
+          <td style="padding:10px">{{ car.listing_date|date:"d.m.Y" }}</td>
+          <td style="padding:10px">{{ car.city }} / {{ car.district }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="9" style="padding:18px;color:#8a94a6">Henüz ilanınız yok.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

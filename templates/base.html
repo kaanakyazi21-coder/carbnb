@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}CarBnB{% endblock %}</title>
+  {% load static %}
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block extra_head %}{% endblock %}
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0;background:#f6f8fc}
+    .topbar{background:#0b132b;color:#fff}
+    .nav{max-width:1400px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .nav-left,.nav-right{display:flex;align-items:center;gap:16px}
+    .nav a{color:#fff;text-decoration:none;font-weight:600;opacity:.95}
+    .nav a:hover{text-decoration:underline;opacity:1}
+    .as-link{border:0;background:transparent;color:#fff;cursor:pointer;font-weight:600;padding:0}
+    .dot{opacity:.6}
+    .container{max-width:1400px;margin:0 auto;padding:0 12px}
+
+    /* ---------- Canlı Destek ---------- */
+    #chat-toggle{
+      position:fixed; right:20px; bottom:20px; width:54px; height:54px;
+      border-radius:999px; background:#0d6efd; color:#fff; border:none;
+      box-shadow:0 10px 25px rgba(0,0,0,.15); cursor:pointer; z-index:10000;
+      display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;
+    }
+    #mini-chat{
+      position:fixed; right:20px; bottom:84px; width:320px; height:420px;
+      background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+      box-shadow:0 10px 25px rgba(0,0,0,.08); display:none;
+      flex-direction:column; overflow:hidden; z-index:10001; font-family:inherit
+    }
+    #mini-chat header{background:#0d6efd;color:#fff;padding:10px 12px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+    #chat-log{flex:1;padding:10px;overflow-y:auto;font-size:14px}
+    #chat-form{display:flex;border-top:1px solid #eee}
+    #chat-input{flex:1;padding:10px;border:0;outline:none}
+    #chat-form button{border:0;padding:0 14px;background:#0d6efd;color:#fff;cursor:pointer}
+    .msg{margin:6px 0}
+    .msg .from{font-weight:600;font-size:12px;color:#6b7280}
+    .msg .text{background:#f3f4f6;border-radius:10px;padding:8px;display:inline-block;max-width:90%}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="nav">
+      <div class="nav-left">
+        <a href="{% url 'cars:car_list' %}">CarBnB</a>
+        <a href="{% url 'cars:car_list' %}">İlanlar</a>
+        <a href="{% url 'cars:car_create' %}">İlan Ver</a>
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'chat:inbox' %}">Mesajlar</a>
+        {% endif %}
+      </div>
+
+      <div class="nav-right">
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'cars:my_cars' %}">ilanlarım</a>
+          <span class="dot">•</span>
+          <span>Merhaba, {{ request.user.username }}</span>
+          <span class="dot">•</span>
+          <a href="{% url 'profile' %}">Profil</a>
+          <span class="dot">•</span>
+          <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="as-link">Çıkış</button>
+          </form>
+        {% else %}
+          <a href="{% url 'account_login' %}">Giriş Yap</a>
+          <span class="dot">•</span>
+          <a href="{% url 'account_signup' %}">Kayıt Ol</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- 🔵 Yüzen açma butonu -->
+  <button id="chat-toggle" aria-label="Canlı Destek">💬</button>
+
+  <!-- 💬 Canlı Destek penceresi -->
+  <div id="mini-chat" aria-live="polite">
+    <header>
+      <span>Canlı Destek</span>
+      <button id="mini-chat-close" style="background:transparent;border:0;color:#fff;font-weight:700;cursor:pointer" type="button">×</button>
+    </header>
+    <div id="chat-body" style="display:flex;flex-direction:column;flex:1;">
+      <div id="chat-log"></div>
+      <form id="chat-form" action="javascript:void(0)" autocomplete="off">
+        <input id="chat-input" placeholder="Mesajınızı yazın…" autocomplete="off">
+        <button type="submit">Gönder</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const panel   = document.getElementById('mini-chat');
+    const openBtn = document.getElementById('chat-toggle');
+    const closeBtn= document.getElementById('mini-chat-close');
+    const logEl   = document.getElementById('chat-log');
+    const form    = document.getElementById('chat-form');
+    const input   = document.getElementById('chat-input');
+
+    let greeted = false;   // her açılışta false olacak (kapatınca resetleniyor)
+
+    function add(from, text){
+      const b = document.createElement('div');
+      b.className = "msg";
+      b.innerHTML = `<div class="from">${from}</div><div class="text">${text}</div>`;
+      logEl.appendChild(b); logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function greet(){
+      add('Bot','Merhaba! Aradığınız marka/modeli yazabilirsiniz (örn: "Corolla" ya da "BMW 3"). Ödeme, depozito, teslimat, kaza/hasar, iptal gibi soruları da yanıtlayabilirim.');
+      greeted = true;
+    }
+
+    function show(){
+      panel.style.display = 'flex';
+      openBtn.style.display = 'none';
+      if(!greeted) greet();
+      input.focus();
+    }
+    function hide(){
+      // 🔄 tam sıfırlama
+      panel.style.display = 'none';
+      openBtn.style.display = 'flex';
+      logEl.innerHTML = "";     // geçmişi sil
+      greeted = false;          // tekrar açılınca yeniden karşılama
+      input.value = "";
+    }
+
+    openBtn.addEventListener('click', show);
+    closeBtn.addEventListener('click', hide);
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const msg = (input.value || "").trim(); if(!msg) return;
+      add('Siz', msg); input.value = '';
+
+      const typing = document.createElement('div');
+      typing.className = "msg"; typing.innerHTML = `<div class="from">Bot</div><div class="text">...</div>`;
+      logEl.appendChild(typing); logEl.scrollTop = logEl.scrollHeight;
+
+      try{
+        const r = await fetch("/api/bot/", {
+          method:"POST",
+          headers: {"Content-Type":"application/json","X-Requested-With":"XMLHttpRequest"},
+          body: JSON.stringify({message: msg})
+        });
+        const data = await r.json();
+        typing.remove();
+        add('Bot', data.reply || 'Şu an yardımcı olamıyorum.');
+      }catch(err){
+        typing.remove();
+        add('Bot', 'Bağlantı hatası. Lütfen tekrar deneyin.');
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

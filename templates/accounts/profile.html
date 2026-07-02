@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profil · CarBnB{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Sayfa düzeni: Sol reklam – İçerik – Sağ reklam */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 260px;
+    gap: 24px;
+    align-items: start;
+    min-height: calc(100vh - 80px);
+  }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    .ad { display:none; }
+  }
+
+  .ad {
+    background: #e9eef7;
+    border: 1px dashed #c5d1ea;
+    border-radius: 12px;
+    height: 600px;
+    position: sticky; top: 16px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 14px; color:#4a5a7a; padding:10px;
+  }
+  .ad img, .ad iframe {
+    width:100%; height:100%;
+    object-fit: cover; border:0; border-radius:8px;
+  }
+
+  .profile-card {
+    background:#fff; border-radius:16px; padding:28px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.05);
+    max-width: 900px; margin: 0 auto;
+  }
+
+  .profile-title { font-size: 32px; margin: 0 0 18px; }
+  .profile-row { font-size: 18px; margin: 10px 0; }
+  .profile-row strong { width: 160px; display:inline-block; color:#0b132b; }
+
+  /* Yıldızlı puan – tıklanabilir */
+  .rating {
+    display:inline-flex;
+    flex-direction: row-reverse;   /* sağdan sola diz */
+    gap:6px; align-items:center; margin-top:6px;
+  }
+  .rating input { display:none; }
+  .rating label {
+    font-size: 28px; cursor: pointer; user-select: none;
+    color:#c7cbd4; transition: transform .08s ease;
+  }
+  .rating label:hover { transform: scale(1.08); }
+
+  /* Seçili ve hover olan + solundakiler (görsel olarak) dolu görünsün */
+  .rating input:checked ~ label,
+  .rating label:hover,
+  .rating label:hover ~ label { color:#ffb400; }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="layout">
+    <!-- Sol reklam alanı: statik görsel/banner -->
+    <aside class="ad">
+      <img src="{% static 'ads/left-300x600.jpg' %}" alt="Reklam">
+    </aside>
+
+    <!-- Orta içerik -->
+    <section class="profile-card">
+      <h1 class="profile-title">Profil</h1>
+
+      <p class="profile-row"><strong>Kullanıcı:</strong> {{ profile.user.get_full_name|default:profile.user.username }}</p>
+      <p class="profile-row"><strong>E-mail:</strong> {{ profile.user.email|default:"Belirtilmemiş" }}</p>
+      <p class="profile-row"><strong>Telefon:</strong> {{ profile.phone|default:"Belirtilmemiş" }}</p>
+
+      <div class="profile-row">
+        <strong>Puan:</strong>
+        <form method="post" action="{% url 'profile' %}" style="display:inline;">
+          {% csrf_token %}
+          <span class="rating">
+            <!-- 5 → 1 sırayla; row-reverse ile soldan sağa dolar -->
+            <input type="radio" id="star5" name="rating" value="5" {% if rating|floatformat:0 == "5" %}checked{% endif %}>
+            <label for="star5">★</label>
+
+            <input type="radio" id="star4" name="rating" value="4" {% if rating|floatformat:0 == "4" %}checked{% endif %}>
+            <label for="star4">★</label>
+
+            <input type="radio" id="star3" name="rating" value="3" {% if rating|floatformat:0 == "3" %}checked{% endif %}>
+            <label for="star3">★</label>
+
+            <input type="radio" id="star2" name="rating" value="2" {% if rating|floatformat:0 == "2" %}checked{% endif %}>
+            <label for="star2">★</label>
+
+            <input type="radio" id="star1" name="rating" value="1" {% if rating|floatformat:0 == "1" %}checked{% endif %}>
+            <label for="star1">★</label>
+          </span>
+          <button type="submit" class="as-link" style="margin-left:8px;">Kaydet</button>
+        </form>
+        <span style="margin-left:8px; opacity:.8;">({{ rating }}/5)</span>
+      </div>
+
+      <a class="edit-link" href="{% url 'profile_edit' %}">✏️ Profili Düzenle</a>
+    </section>
+
+    <!-- Sağ reklam alanı: statik görsel/banner -->
+    <aside class="ad">
+      <img src="{% static 'ads/right-300x600.jpg' %}" alt="Reklam">
+    </aside>
+  </div>
+{% endblock %}
