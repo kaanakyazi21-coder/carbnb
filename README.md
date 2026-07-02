@@ -4,6 +4,18 @@ Django ile geliştirilmiş, Airbnb'nin araç kiralama versiyonu gibi çalışan 
 web platformu. Kullanıcılar araç ilanı verebilir, ilanları filtreleyip
 rezervasyon yapabilir ve ilan sahibiyle uygulama içi mesajlaşabilir.
 
+| İlan Listesi | İlan Detayı |
+|---|---|
+| ![İlan Listesi](docs/ilan_listesi.png) | ![İlan Detayı](docs/ilan_detay.png) |
+
+| Teknik Özellikler | Boya/Hasar & Donanım |
+|---|---|
+| ![Teknik Özellikler](docs/teknik_ozellikler.png) | ![Boya Hasar](docs/boya_hasar_donanim.png) |
+
+| Konum | Canlı Destek |
+|---|---|
+| ![Konum](docs/konum.png) | ![Canlı Destek](docs/canli_destek.png) |
+
 ## Özellikler
 
 - **Kullanıcı sistemi**: Google ile giriş dahil (django-allauth), profil,
